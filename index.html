@@ -13,28 +13,24 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head><body>
-<div class="hud"><h1>📞 Co-Pilot</h1><nav id="nav">
-<button data-t="t1" class="on">1 · Prompt Builder</button><button data-t="t2">2 · Script &amp; Tiers</button>
-<button data-t="t3">3 · Listing Intake</button><button data-t="t4">4 · KPI Tracker</button></nav><div class="hudr" title="Space: start/pause timer · D: +1 dial · C: +1 connect · 1–6: scripts"><span class="big" id="tm">00:00</span><button class="p" id="ts">Start</button><button id="tr">Reset</button><button class="p" id="hd">+1 Dial <b id="hdn">0</b></button><button class="p" id="hc">+1 Connect <b id="hcn">0</b></button></div></div>
+<div class="hud"><h1>📞 Co-Pilot</h1><nav id="nav"><button data-t="t1" class="on">1 · Live Call Cockpit</button><button data-t="t2">2 · Pipeline &amp; Follow-Ups</button><button data-t="t3">3 · Listing Intake</button><button data-t="t4">4 · KPI Tracker</button></nav><div class="hudr" title="Space: start/pause timer · D: +1 dial · C: +1 connect · 1–6: scripts"><span class="big" id="tm">00:00</span><button class="p" id="ts">Start</button><button id="tr">Reset</button><button class="p" id="hd">+1 Dial <b id="hdn">0</b></button><button class="p" id="hc">+1 Connect <b id="hcn">0</b></button></div></div>
 <main>
 
-<section id="t1" class="tab on"><div class="g">
-<div class="c"><label>Prospect persona</label><select id="persona"><option>Banking Retiree</option><option>Executive / Professional Retiree</option><option>Local Business Owner</option><option>B2B Founder</option></select>
-<label>Region</label><select id="region"><option>United States (EST/CST/PST)</option><option>Europe (UK/CET)</option></select>
-<label>Call stage</label><select id="stage"><option>Opener &amp; Rapport</option><option>Online Visibility Value</option><option>Growth Milestone (First 500,000) Mention</option><option>Listing Tier Presentation</option><option>Objection Handling</option><option>Follow-Up / Send Information</option><option>Verify Details &amp; Confirm</option></select>
-<label>Live objection</label><select id="obj"><option value="">None</option><option>Why do I need online visibility if I’m retired?</option><option>It’s too expensive / I’m on a fixed pension</option><option>Send me information first</option><option>Is this legitimate?</option><option>I need to ask my spouse/partner</option></select>
-<label>Extra notes (optional)</label><textarea id="xn" style="min-height:60px" placeholder="What isn’t landing? Anything the prospect said?"></textarea></div>
-<div class="c" style="grid-column:span 2;min-width:260px"><h2>Compiled prompt</h2><textarea id="pout" style="min-height:300px" readonly></textarea>
-<div class="row"><button class="p" id="cp">Copy Prompt</button><button id="oc">Open in Claude</button><span id="pmsg" class="mu"></span></div>
-<small>“Open in Claude” copies the prompt, then opens claude.ai/new — paste it there.</small></div></div></section>
-
-<section id="t2" class="tab"><div class="cock">
+<section id="t1" class="tab on"><div id="clk"></div><div class="cock">
 <div class="col"><div class="row" id="stabs" style="margin:0"></div><div class="c" id="sbox"></div>
-<details class="c"><summary><b>Compliance quick check</b> <small>(guidance, not legal advice)</small></summary><div class="row"><button id="cu" class="p">US</button><button id="ce">EU / UK</button><button id="cx">Clear ticks</button></div><div id="chk"></div></details></div>
+<details class="c"><summary><b>Compliance quick check</b> <small>(guidance, not legal advice)</small></summary><div class="row"><button id="cu" class="p">US</button><button id="ce">EU / UK</button><button id="cx">Clear ticks</button></div><div id="chk"></div></details>
+<details class="c"><summary><b>Quick call scratchpad</b></summary><label>Name</label><input id="pn" data-p="pad.name"><label>Phone</label><input id="pp" data-p="pad.phone"><label>Notes</label><textarea id="pt" data-p="pad.notes" style="min-height:90px"></textarea><div class="row"><button class="p" id="pl">Send to Pipeline</button><button id="pi">Send to Listing Intake</button><button id="pc" class="x">Clear</button></div></details></div>
 <div class="col"><h2 style="margin:0">Listing tiers</h2><div id="tiers"></div><div class="note">Prices are placeholders: replace them with your real prices (the KPI tab uses them). State full price, billing term and refund terms before taking payment.</div></div>
 <div class="col"><div class="row" style="justify-content:space-between;margin:0"><h2 style="margin:0">Response cards</h2><button id="addc">+ Add card</button></div><div id="cards"></div></div>
 </div></section>
 
+<section id="t2" class="tab"><div class="pipe"><div class="c"><h2>Log a lead</h2>
+<label>Prospect name</label><input id="l_name"><label>Persona</label><select id="l_persona"><option>Banking Retiree</option><option>Exec / Professional Retiree</option><option>Local Business Owner</option><option>B2B Founder</option></select>
+<label>Region</label><select id="l_region"><option>US</option><option>EU</option></select><label>Phone</label><input id="l_phone"><label>Email</label><input id="l_email" type="email">
+<label>Pipeline stage</label><select id="l_stage"><option>Cold Lead</option><option>Interested - Sent Info</option><option>Warm Follow-Up</option><option>Ready to Close</option><option>Closed Won</option></select>
+<label>Next follow-up date</label><input id="l_date" type="date"><label>Notes</label><textarea id="l_notes" style="min-height:70px"></textarea><div class="row"><button class="p" id="lsave">Add to pipeline</button></div></div>
+<div><div class="row" id="lf"></div><div class="g" id="ll" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr))"></div></div></div>
+<h2 style="margin-top:18px">Email templates <small>(editable; [Tiers] fills in your current tiers when copied)</small></h2><div class="g" id="tpls"></div></section>
 <section id="t3" class="tab"><div class="g">
 <div class="c"><label>Full name / business name</label><input id="f_name"><label>Region</label><select id="f_reg"><option>US</option><option>EU</option><option>UK</option></select>
 <label>Email</label><input id="f_email" type="email"><label>Phone</label><input id="f_phone"><label>Former bank / institution / business</label><input id="f_inst"><label>Career background</label><textarea id="f_bg" style="min-height:70px"></textarea></div>
@@ -49,6 +45,6 @@
 <section id="t4" class="tab"><div class="g" id="kg"></div>
 <div class="c" style="margin-top:12px"><div class="g" id="rates"></div></div>
 <div class="c" style="margin-top:12px"><h2>End-of-day report</h2><textarea id="eod" style="min-height:220px"></textarea>
-<div class="row"><button class="p" id="eg">Generate report</button><button id="ecp">Copy</button><button id="eoc">Open prompt in Claude</button><button id="ekr" class="x">Reset day</button></div></div></section>
+<div class="row"><button class="p" id="eg">Generate report</button><button id="ecp">Copy</button><button id="ekr" class="x">Reset day</button></div></div></section>
 </main>
-<script src="js/app.js" defer></script></body></html>
+<div id="toast"></div><script src="js/app.js" defer></script></body></html>

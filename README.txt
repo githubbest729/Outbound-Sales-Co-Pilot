@@ -7,3 +7,4 @@ Outbound Sales Co-Pilot - PWA package
 6. robots.txt blocks search indexing; remove it if you want the page indexed.
 7. v2: split into css/ and js/, sticky HUD, 3-column cockpit. Keys: Space timer, D dial, C connect, 1-6 scripts.
 8. .well-known/assetlinks.json has placeholders; fill in package name + SHA-256 before using a TWA.
+9. v3: Prompt Builder removed; cockpit is tab 1; pipeline + email templates added; KPI connect fix. Cache copilot-v3.

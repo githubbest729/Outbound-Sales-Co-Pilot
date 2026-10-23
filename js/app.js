@@ -23,34 +23,12 @@ const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}};
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const num=p=>parseFloat(String(p).replace(/[^0-9.]/g,""))||0;
 function setp(path,v){const a=path.split(".");let o=S;for(let i=0;i<a.length-1;i++)o=o[a[i]];o[a[a.length-1]]=v}
-document.addEventListener("input",e=>{const p=e.target.dataset.p;if(!p)return;setp(p,e.target.value);save();if(p.startsWith("tiers")){fillTiers();buildPrompt();kpi()}if(p.startsWith("scripts")&&p.endsWith(".t"))stabs(1);});
+document.addEventListener("input",e=>{const p=e.target.dataset.p;if(!p)return;setp(p,e.target.value);save();if(p.startsWith("tiers")){fillTiers();kpi()}if(p.startsWith("scripts")&&p.endsWith(".t"))stabs(1);});
 function copy(t,m){const done=()=>{if(m){m.textContent="Copied ✓";setTimeout(()=>m.textContent="",1800)}};
 if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(done,()=>fb());else fb();
 function fb(){const a=document.createElement("textarea");a.value=t;document.body.appendChild(a);a.select();try{document.execCommand("copy")}catch(e){}a.remove();done()}}
 /* tabs */
 $("nav").onclick=e=>{const t=e.target.dataset.t;if(!t)return;document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x.id===t));document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.t===t));if(t==="t4")kpi()};
-/* 1 prompt */
-function buildPrompt(){const v=i=>$(i).value;const tiers=S.tiers.map(t=>`  <tier name="${t.n}" price="${t.p}">${t.d}</tier>`).join("\n");
-const o=v("obj"),n=v("xn").trim();
-$("pout").value=`<role>You are an outbound sales co-pilot helping a representative on a live phone call. Be warm, consultative and transparent. Never use false urgency or pressure, and always honor a “no”.</role>
-<context>
-  <persona>${v("persona")}</persona>
-  <region>${v("region")}</region>
-  <call_stage>${v("stage")}</call_stage>
-  <offer>Paid online professional directory listings. Growth milestone: “First 500,000” listings (a company milestone, not a deadline).</offer>
-  <tiers>
-${tiers}
-  </tiers>
-</context>${o?`\n<live_objection>${o}</live_objection>`:""}${n?`\n<notes>${n}</notes>`:""}
-<instructions>
-1. Give 3 short, natural, speakable responses with tonality cues for this stage${o?" and objection":""}.
-2. State prices and terms plainly; if the prospect hesitates, offer to send information or let them decide later.
-3. Respect regional etiquette and call-time norms; keep claims accurate and verifiable.
-4. If the prospect says no or asks not to be called again, give a polite close and a do-not-call note.
-</instructions>`}
-["persona","region","stage","obj","xn"].forEach(i=>$(i).addEventListener("input",buildPrompt));
-$("cp").onclick=()=>copy($("pout").value,$("pmsg"));
-$("oc").onclick=()=>{copy($("pout").value,$("pmsg"));window.open("https://claude.ai/new","_blank","noopener")};
 /* 2 script */
 let T=0,run=0,iv;const fmt=s=>String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
 $("ts").onclick=()=>{if(run){clearInterval(iv);run=0;$("ts").textContent="Resume"}else{run=1;$("ts").textContent="Pause";iv=setInterval(()=>{T++;$("tm").textContent=fmt(T)},1000)}};
@@ -90,8 +68,8 @@ const rev=S.tiers.reduce((a,t,i)=>a+(S.sold[i]||0)*num(t.p),0);
 h+=`<div class="c"><small>Total revenue</small><div class="big">${rev.toLocaleString()}</div><small>Auto-calculated from tier prices</small></div>`;$("kg").innerHTML=h;
 const sold=S.sold.reduce((a,b)=>a+(b||0),0),pc=(a,b)=>b?(100*a/b).toFixed(1)+"%":"–";
 $("rates").innerHTML=[["Connect rate",pc(S.kpi.connects,S.kpi.dials)],["Qualify rate",pc(S.kpi.qualified,S.kpi.connects)],["Close rate (of connects)",pc(sold,S.kpi.connects)],["Listings sold",sold]].map(([l,v])=>`<div><small>${l}</small><div class="big" style="font-size:26px">${v}</div></div>`).join("");return{rev,sold,pc}}
-$("kg").onclick=e=>{const d=+e.target.dataset.d;if(!d)return;const k=e.target.dataset.k,s=e.target.dataset.s;if(k)S.kpi[k]=Math.max(0,S.kpi[k]+d);else S.sold[s]=Math.max(0,(S.sold[s]||0)+d);save();kpi()};
-function eod(){const r=kpi(),k=S.kpi;return`END-OF-DAY REPORT · ${new Date().toDateString()}
+$("kg").onclick=e=>{const d=+e.target.dataset.d;if(!d)return;const k=e.target.dataset.k,s=e.target.dataset.s;if(k){S.kpi[k]=Math.max(0,S.kpi[k]+d);if(k==="connects"&&d>0)S.kpi.dials++;S.kpi.dials=Math.max(S.kpi.dials,S.kpi.connects)}else S.sold[s]=Math.max(0,(S.sold[s]||0)+d);save();kpi()};
+function eod(){const r=_kpi(),k=S.kpi;return`END-OF-DAY REPORT · ${new Date().toDateString()}
 Dials: ${k.dials} | Conversations: ${k.connects} (${r.pc(k.connects,k.dials)})
 Qualified leads: ${k.qualified} (${r.pc(k.qualified,k.connects)} of conversations)
 Follow-ups completed: ${k.followups}
@@ -99,20 +77,58 @@ Listings sold: ${r.sold} (close rate ${r.pc(r.sold,k.connects)})
 ${S.tiers.map((t,i)=>`  - ${t.n}: ${S.sold[i]||0}`).join("\n")}
 Total revenue: ${r.rev.toLocaleString()}
 Notes / blockers: `}
-$("eg").onclick=()=>$("eod").value=eod();$("ecp").onclick=()=>copy($("eod").value,null);
-$("eoc").onclick=()=>{const t=`<task>Turn these daily sales metrics into a concise manager summary with 2 wins, 1 area to improve and a plan for tomorrow.</task>\n<metrics>\n${$("eod").value||eod()}\n</metrics>`;copy(t,null);window.open("https://claude.ai/new","_blank","noopener")};
+$("eg").onclick=()=>refreshEod();$("ecp").onclick=()=>copy($("eod").value,null);
 $("ekr").onclick=()=>{if(confirm("Reset today’s counters?")){S.kpi={dials:0,connects:0,qualified:0,followups:0};S.sold=[0,0,0];save();kpi()}};
 /* init */
 if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
-buildPrompt();chk();stabs();tiersR();cardsR();fillTiers();recs();kpi();
+chk();stabs();tiersR();cardsR();fillTiers();recs();kpi();
 
 /* v2 upgrades */
 let PV=0;const hl=t=>esc(t).replace(/\[[^\]]*\]/g,m=>`<span class="ph">${m}</span>`).replace(/\n/g,"<br>");
 sbox=function(){const s=S.scripts[S.si];$("sbox").innerHTML=`<div class="row" style="margin-top:0"><input data-p="scripts.${S.si}.t" value="${esc(s.t)}" style="flex:1"><button id="pvt">${PV?"Edit":"Teleprompter"}</button></div>`+(PV?`<div class="pv">${hl(s.b)}</div>`:`<textarea class="script" data-p="scripts.${S.si}.b">${esc(s.b)}</textarea>`);$("pvt").onclick=()=>{PV=!PV;sbox()}};
-const _kpi=kpi;kpi=function(){const r=_kpi();$("hdn").textContent=S.kpi.dials;$("hcn").textContent=S.kpi.connects;return r};
-$("hd").onclick=()=>{S.kpi.dials++;save();kpi()};$("hc").onclick=()=>{S.kpi.connects++;save();kpi()};
+const _kpi=kpi;kpi=function(){const r=_kpi();$("hdn").textContent=S.kpi.dials;$("hcn").textContent=S.kpi.connects;refreshEod();return r};
+$("hd").onclick=()=>{S.kpi.dials++;save();kpi()};$("hc").onclick=()=>{S.kpi.connects++;S.kpi.dials++;save();kpi()};
 addEventListener("keydown",e=>{if(/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)||e.target.isContentEditable||e.ctrlKey||e.metaKey||e.altKey)return;const k=e.key.toLowerCase();
 if(k===" "){e.preventDefault();if(e.target.tagName==="BUTTON")e.target.blur();$("ts").click()}else if(k==="d")$("hd").click();else if(k==="c")$("hc").click();
-else if(/^[1-6]$/.test(k)&&S.scripts[k-1]){document.querySelector("[data-t=t2]").click();S.si=+k-1;save();stabs()}});
+else if(/^[1-6]$/.test(k)&&S.scripts[k-1]){document.querySelector("[data-t=t1]").click();S.si=+k-1;save();stabs()}});
 {const t=location.hash.slice(1);if(/^t[1-4]$/.test(t))document.querySelector(`nav button[data-t=${t}]`).click()}
 stabs();kpi();
+
+/* v3 */
+S.kpi.dials=Math.max(S.kpi.dials,S.kpi.connects);S.pad=S.pad||{name:"",phone:"",notes:""};S.leads=S.leads||[];
+S.tpl=S.tpl||[
+{n:"1 · Initial cold outreach",s:"Your professional listing: an introduction from [Company]",b:"Dear [Name],\n\nMy name is [My name] and I work with [Company]. We’re building an online professional directory, and your background at [Bank/Business] stood out to us.\n\nA listing gives you one accurate, verified page about your career. It’s a paid service, and I’d be glad to share the options and prices. If this isn’t of interest, simply reply “no” and I won’t contact you again.\n\nKind regards,\n[My name]\n[Company] · [Phone] · [Website]"},
+{n:"2 · As promised: tiers & info",s:"As promised: listing options and prices",b:"Dear [Name],\n\nThank you for speaking with me today. As promised, here are our listing options:\n\n[Tiers]\n\nTerms, billing period and our refund policy: [link]. There’s no obligation, and you’re welcome to take your time or ask me anything. May I call you on [date/time]?\n\nKind regards,\n[My name]\n[Company] · [Phone]"},
+{n:"3 · Warm follow-up check-in",s:"Following up on your listing questions",b:"Dear [Name],\n\nI enjoyed our conversation on [date] and wanted to check whether you had any questions about the [Tier name] listing. I’m happy to go over the details again or send anything else you need.\n\nIf now isn’t the right time, just let me know and I’ll respect that.\n\nKind regards,\n[My name]\n[Company] · [Phone]"}];
+const toast=m=>{const t=$("toast");t.textContent=m;t.style.opacity=1;setTimeout(()=>t.style.opacity=0,1700)};
+function refreshEod(){const e=$("eod"),i=e.value.indexOf("Notes / blockers:"),n=i>=0?e.value.slice(i+17):"";e.value=eod().replace(/ $/,"")+n}
+/* clock bar */
+const ZN=[["US Eastern","America/New_York","en-US"],["US Central","America/Chicago","en-US"],["US Pacific","America/Los_Angeles","en-US"],["UK","Europe/London","en-GB"],["Central Europe","Europe/Paris","en-GB"]];
+function clk(){const n=new Date();$("clk").innerHTML=ZN.map(([l,z,lc])=>{const f=new Intl.DateTimeFormat(lc,{timeZone:z,hour:"2-digit",minute:"2-digit",hourCycle:"h23",timeZoneName:"short"}).formatToParts(n),g=t=>f.find(p=>p.type===t).value,x=+g("hour")+ +g("minute")/60,c=x>=9&&x<20?"ok":x>=8&&x<21?"edge":"no";
+return`<div class="z ${c}"><small>${l}</small><b>${g("hour")}:${g("minute")}</b><small>${g("timeZoneName")} · ${c==="ok"?"good to call":c==="edge"?"edge of window":"outside hours"}</small></div>`}).join("")+`<div class="z"><small>Legend</small><small>US law: 8am–9pm local.<br>Green = 9am–8pm.</small></div>`}
+/* leads */
+const STG=["Cold Lead","Interested - Sent Info","Warm Follow-Up","Ready to Close","Closed Won"],PER=["Banking Retiree","Exec / Professional Retiree","Local Business Owner","B2B Founder"];let FL="All";
+const today=()=>new Date().toISOString().slice(0,10),due=l=>l.date&&l.date<=today()&&l.stage!=="Closed Won";
+const opt=(a,v)=>a.map(s=>`<option ${s===v?"selected":""}>${s}</option>`).join("");
+function leads(){const cnt=s=>S.leads.filter(l=>s==="All"?1:s==="Due"?due(l):l.stage===s).length;
+$("lf").innerHTML=["All","Due",...STG].map(s=>`<button data-f="${s}" class="${s===FL?"p":""}">${s} (${cnt(s)})</button>`).join("");
+const L=S.leads.map((l,i)=>[l,i]).filter(([l])=>FL==="All"||(FL==="Due"?due(l):l.stage===FL)).sort((a,b)=>(a[0].date||"9").localeCompare(b[0].date||"9"));
+$("ll").innerHTML=L.map(([l,i])=>`<div class="c"><div class="ctr"><b>${esc(l.name)} ${due(l)?'<span class="od">Follow up</span>':""}</b><button class="x" data-ld="${i}">✕</button></div>
+<div class="g" style="grid-template-columns:1fr 1fr"><div><label>Persona</label><select data-p="leads.${i}.persona">${opt(PER,l.persona)}</select></div><div><label>Region</label><select data-p="leads.${i}.region">${opt(["US","EU"],l.region)}</select></div>
+<div><label>Phone</label><input data-p="leads.${i}.phone" value="${esc(l.phone)}"></div><div><label>Email</label><input data-p="leads.${i}.email" value="${esc(l.email)}"></div>
+<div><label>Stage</label><select data-p="leads.${i}.stage">${opt(STG,l.stage)}</select></div><div><label>Next follow-up</label><input type="date" data-p="leads.${i}.date" value="${esc(l.date)}"></div></div>
+<label>Notes</label><textarea data-p="leads.${i}.notes" style="min-height:60px">${esc(l.notes)}</textarea><div class="row"><button class="p" data-lm="${i}">Move to Listing Intake</button></div></div>`).join("")||"<small>No leads here yet.</small>"}
+function toIntake(o){$("f_name").value=o.name||"";$("f_email").value=o.email||"";$("f_phone").value=o.phone||"";$("f_note").value=o.notes||"";if(o.region)$("f_reg").value=o.region;document.querySelector("[data-t=t3]").click();toast("Sent to Listing Intake")}
+addEventListener("change",e=>{if((e.target.dataset.p||"").startsWith("leads.")&&(e.target.tagName==="SELECT"||e.target.type==="date"))leads()});
+$("lf").onclick=e=>{if(e.target.dataset.f){FL=e.target.dataset.f;leads()}};
+$("ll").onclick=e=>{const d=e.target.dataset;if(d.ld!==undefined&&confirm("Delete this lead?")){S.leads.splice(+d.ld,1);save();leads()}if(d.lm!==undefined)toIntake(S.leads[+d.lm])};
+$("lsave").onclick=()=>{const g=k=>$("l_"+k).value.trim();if(!g("name"))return alert("Add a prospect name first.");S.leads.push({name:g("name"),persona:g("persona"),region:g("region"),phone:g("phone"),email:g("email"),stage:g("stage"),date:g("date"),notes:g("notes")});save();["name","phone","email","date","notes"].forEach(k=>$("l_"+k).value="");leads();toast("Lead added")};
+/* templates */
+function tpls(){$("tpls").innerHTML=S.tpl.map((t,i)=>`<div class="c"><label>Template name</label><input data-p="tpl.${i}.n" value="${esc(t.n)}"><label>Subject</label><input data-p="tpl.${i}.s" value="${esc(t.s)}"><label>Body</label><textarea data-p="tpl.${i}.b" style="min-height:240px">${esc(t.b)}</textarea><div class="row"><button class="p" data-cp="${i}">Copy Email</button></div></div>`).join("")}
+$("tpls").onclick=e=>{const i=e.target.dataset.cp;if(i===undefined)return;const t=S.tpl[i];copy(`Subject: ${t.s}\n\n${t.b.replace("[Tiers]",S.tiers.map(x=>`- ${x.n} (${x.p}): ${x.d}`).join("\n"))}`);toast("Email copied")};
+/* scratchpad */
+const padSet=()=>{$("pn").value=S.pad.name;$("pp").value=S.pad.phone;$("pt").value=S.pad.notes};
+$("pl").onclick=()=>{if(!S.pad.name.trim())return alert("Add a name first.");S.leads.push({name:S.pad.name.trim(),persona:PER[0],region:"US",phone:S.pad.phone,email:"",stage:"Cold Lead",date:"",notes:S.pad.notes});S.pad={name:"",phone:"",notes:""};save();padSet();leads();toast("Sent to Pipeline")};
+$("pi").onclick=()=>{toIntake({name:S.pad.name,phone:S.pad.phone,notes:S.pad.notes})};
+$("pc").onclick=()=>{S.pad={name:"",phone:"",notes:""};save();padSet()};
+padSet();leads();tpls();clk();setInterval(clk,5000);kpi();

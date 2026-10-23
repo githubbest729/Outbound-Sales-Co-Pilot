@@ -97,8 +97,8 @@
   ],
   "shortcuts": [
     {
-      "name": "Prompt Builder",
-      "short_name": "Prompt",
+      "name": "Live Call Cockpit",
+      "short_name": "Live",
       "url": "./index.html#t1",
       "icons": [
         {
@@ -109,8 +109,8 @@
       ]
     },
     {
-      "name": "Script & Tiers",
-      "short_name": "Script",
+      "name": "Pipeline & Follow-Ups",
+      "short_name": "Pipeline",
       "url": "./index.html#t2",
       "icons": [
         {
